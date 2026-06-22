@@ -1,0 +1,35 @@
+# Raw dataset -- 2.85GB, GitHub rejects anything over 100MB anyway. Never commit this.
+data/raw/
+*.csv
+
+# Large intermediate data files (regenerate via the notebook instead of committing)
+accidents_sample.parquet
+accidents_features.parquet
+
+# Trained model files other than the production model (keep models/xgb_model.joblib only)
+rf_model.joblib
+lgb_model.joblib
+cat_model.joblib
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Python environment / cache
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# OS junk files
+.DS_Store
+Thumbs.db
+
+# IDE settings
+.vscode/
+.idea/
+
+# Streamlit local cache
+.streamlit/
+
+catboost_info/

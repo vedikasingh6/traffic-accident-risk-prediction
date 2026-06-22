@@ -1,0 +1,9 @@
+{
+  "best_model": "XGBoost",
+  "threshold": 0.35,
+  "metrics_at_threshold": {
+    "precision": 0.445,
+    "recall": 0.9,
+    "f1": 0.596
+  }
+}
