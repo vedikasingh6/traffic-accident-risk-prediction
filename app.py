@@ -8,7 +8,7 @@ import plotly.express as px
 
 st.set_page_config(page_title="Traffic Accident Risk Predictor", layout="wide", page_icon=":vertical_traffic_light:")
 
-# --- Load everything ONCE and cache it -- avoids reloading the model on every click ---
+
 @st.cache_resource
 def load_assets():
     model = joblib.load("models/xgb_model.joblib")
@@ -46,9 +46,7 @@ tab1, tab2, tab3, tab4 = st.tabs(
     ["Risk Calculator", "Accident Heatmap", "Weather Influence", "Feature Importance"]
 )
 
-# ============================================================
-# TAB 1: RISK CALCULATOR
-# ============================================================
+
 with tab1:
     st.header("Check a Scenario")
 
@@ -106,7 +104,7 @@ with tab1:
     is_late_night = int(hour in [0, 1, 2, 3, 4, 5])
 
     if st.button("Predict Risk", type="primary", use_container_width=True):
-        # Build a feature row matching EXACTLY the columns the model was trained on
+      
         row = {col: 0 for col in meta['feature_columns']}
 
         row['Start_Lat'] = meta['numeric_defaults']['Start_Lat']
@@ -190,9 +188,7 @@ with tab1:
                     if r['SHAP'] < 0:
                         st.write(f"`{r['Feature']}` = {r['Value']:.2f}  ({r['SHAP']:.3f})")
 
-# ============================================================
-# TAB 2: ACCIDENT HEATMAP
-# ============================================================
+
 with tab2:
     st.header("Geographic Risk Distribution")
     st.caption("State differences include a reporting-source effect. See Methodology notes above.")
@@ -211,10 +207,19 @@ with tab2:
     with map_col:
         st.subheader("Accident Density (sample of 20,000)")
         color_by = st.radio("Color points by:", ["Severity", "Risk_Target"], horizontal=True)
-        st.map(
-            sample.rename(columns={"Start_Lat": "lat", "Start_Lng": "lon"})[["lat", "lon"]],
-            size=20
-        )
+
+        severity_colors = {1: "#2ecc71", 2: "#f1c40f", 3: "#e67e22", 4: "#e74c3c"}
+        risk_colors = {0: "#3498db", 1: "#e74c3c"}
+
+        map_data = sample.rename(columns={"Start_Lat": "lat", "Start_Lng": "lon"}).copy()
+        if color_by == "Severity":
+            map_data["color"] = map_data["Severity"].map(severity_colors)
+            st.caption("Green (Severity 1) to red (Severity 4)")
+        else:
+            map_data["color"] = map_data["Risk_Target"].map(risk_colors)
+            st.caption("Blue = Low-Risk, Red = High-Risk")
+
+        st.map(map_data[["lat", "lon", "color"]], size=20, color="color")
 
     with rank_col:
         st.subheader("Highest-Risk States")
@@ -243,9 +248,7 @@ with tab2:
     fig_state.update_layout(coloraxis_showscale=False)
     st.plotly_chart(fig_state, use_container_width=True)
 
-# ============================================================
-# TAB 3: WEATHER INFLUENCE
-# ============================================================
+
 with tab3:
     st.header("Weather & Road Feature Influence on Severity")
     st.caption(
@@ -301,9 +304,7 @@ with tab3:
         "uncontrolled intersections and merge points rather than signal- or stop-controlled ones."
     )
 
-# ============================================================
-# TAB 4: FEATURE IMPORTANCE
-# ============================================================
+
 with tab4:
     st.header("Global Feature Importance (SHAP)")
     st.caption(
