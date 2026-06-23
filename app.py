@@ -6,7 +6,7 @@ import json
 import shap
 import plotly.express as px
 
-st.set_page_config(page_title="Traffic Accident Risk Predictor", layout="wide", page_icon="🚦")
+st.set_page_config(page_title="Traffic Accident Risk Predictor", layout="wide", page_icon=":vertical_traffic_light:")
 
 # --- Load everything ONCE and cache it -- avoids reloading the model on every click ---
 @st.cache_resource
@@ -26,27 +26,36 @@ def get_explainer(_model):
 
 explainer = get_explainer(model)
 
-st.title("🚦 Traffic Accident Severity Risk Predictor")
+st.title("Traffic Accident Severity Risk Predictor")
 st.caption(
-    "Predicts whether a US traffic accident is likely to be **high-severity** "
+    "Predicts whether a US traffic accident is likely to be high-severity "
     "(injury/fatality-level) based on conditions at the time and place. "
-    "Trained on 500k+ records from the US-Accidents dataset (Moosavi et al.)."
+    "Trained on 500K+ records from the US-Accidents dataset (Moosavi et al.)."
 )
 
+with st.expander("Methodology notes"):
+    st.markdown(
+        "This model predicts severity given that an accident occurred, not whether one "
+        "will happen; the dataset only contains accidents that already happened. "
+        "Severity reporting also varies by data source (roughly 8% vs 33% high-severity "
+        "rate between sources), so `Source` is included as a model feature rather than "
+        "removed. Full writeup is in the project README."
+    )
+
 tab1, tab2, tab3, tab4 = st.tabs(
-    ["🎯 Risk Calculator", "🗺️ Accident Heatmap", "🌦️ Weather Influence", "📊 Feature Importance"]
+    ["Risk Calculator", "Accident Heatmap", "Weather Influence", "Feature Importance"]
 )
 
 # ============================================================
 # TAB 1: RISK CALCULATOR
 # ============================================================
 with tab1:
-    st.header("Predict Risk for a Given Scenario")
+    st.header("Check a Scenario")
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.subheader("📍 Location & Time")
+        st.subheader("Location & Time")
         state_list = sorted(meta['state_to_code'].keys())
         state = st.selectbox("State", state_list)
         hour = st.slider("Hour of Day (24h)", 0, 23, 8)
@@ -58,21 +67,21 @@ with tab1:
         is_day = st.radio("Light Condition", ["Day", "Night"], horizontal=True) == "Day"
 
     with col2:
-        st.subheader("🌦️ Weather")
+        st.subheader("Weather")
         weather = st.selectbox("Weather Condition", meta['weather_categories'])
         wind_dir = st.selectbox("Wind Direction", meta['wind_categories'])
         temperature = st.number_input("Temperature (°F)", value=meta['numeric_defaults']['Temperature(F)'])
         humidity = st.number_input("Humidity (%)", value=meta['numeric_defaults']['Humidity(%)'], min_value=0.0, max_value=100.0)
 
     with col3:
-        st.subheader("🛣️ Road Features")
+        st.subheader("Road Features")
         junction = st.checkbox("Junction")
         traffic_signal = st.checkbox("Traffic Signal")
         crossing = st.checkbox("Crossing")
         stop = st.checkbox("Stop Sign")
         station = st.checkbox("Station nearby")
 
-    with st.expander("⚙️ Advanced settings (weather detail, more road features, data source)"):
+    with st.expander("Advanced: weather detail, more road features, data source"):
         adv1, adv2, adv3 = st.columns(3)
         with adv1:
             pressure = st.number_input("Pressure (in)", value=meta['numeric_defaults']['Pressure(in)'])
@@ -88,11 +97,7 @@ with tab1:
             railway = st.checkbox("Railway crossing")
             traffic_calming = st.checkbox("Traffic Calming")
             source = st.selectbox("Data Reporting Source", sorted(meta['source_to_code'].keys()))
-            st.caption(
-                "ℹ️ This reflects *which data provider* reported the accident, not a real-world "
-                "cause. Our EDA found severity labeling varies sharply by source (8% vs ~33% "
-                "high-severity rate). Included for model transparency — see README."
-            )
+            st.caption("Which provider reported the accident. See Methodology notes above.")
 
     weekday_map = {'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3, 'Friday': 4, 'Saturday': 5, 'Sunday': 6}
     weekday_num = weekday_map[weekday_name]
@@ -100,7 +105,7 @@ with tab1:
     is_rush_hour = int(hour in [7, 8, 9, 16, 17, 18, 19])
     is_late_night = int(hour in [0, 1, 2, 3, 4, 5])
 
-    if st.button("🔍 Predict Risk", type="primary", use_container_width=True):
+    if st.button("Predict Risk", type="primary", use_container_width=True):
         # Build a feature row matching EXACTLY the columns the model was trained on
         row = {col: 0 for col in meta['feature_columns']}
 
@@ -154,13 +159,13 @@ with tab1:
         with result_col1:
             st.metric("High-Severity Risk Probability", f"{prob * 100:.1f}%")
             if is_high_risk:
-                st.error(f"⚠️ **HIGH RISK** (threshold: {threshold * 100:.0f}%)")
+                st.error(f"HIGH RISK (threshold: {threshold * 100:.0f}%)")
             else:
-                st.success(f"✅ **LOW RISK** (threshold: {threshold * 100:.0f}%)")
-            st.caption(f"Model: XGBoost · Decision threshold tuned for 90% recall on severe accidents")
+                st.success(f"LOW RISK (threshold: {threshold * 100:.0f}%)")
+            st.caption("Model: XGBoost. Threshold tuned for 90% recall on severe accidents.")
 
         with result_col2:
-            st.markdown("**Why this prediction? (SHAP explanation)**")
+            st.markdown("**Why this prediction**")
             shap_vals = explainer.shap_values(X_input)[0]
             feature_vals = X_input.iloc[0]
 
@@ -175,12 +180,12 @@ with tab1:
 
             inc_col, dec_col = st.columns(2)
             with inc_col:
-                st.markdown("🔺 *Increasing risk*")
+                st.markdown("Increasing risk")
                 for _, r in top_increase.iterrows():
                     if r['SHAP'] > 0:
                         st.write(f"`{r['Feature']}` = {r['Value']:.2f}  (+{r['SHAP']:.3f})")
             with dec_col:
-                st.markdown("🔻 *Decreasing risk*")
+                st.markdown("Decreasing risk")
                 for _, r in top_decrease.iterrows():
                     if r['SHAP'] < 0:
                         st.write(f"`{r['Feature']}` = {r['Value']:.2f}  ({r['SHAP']:.3f})")
@@ -190,6 +195,7 @@ with tab1:
 # ============================================================
 with tab2:
     st.header("Geographic Risk Distribution")
+    st.caption("State differences include a reporting-source effect. See Methodology notes above.")
 
     @st.cache_data
     def load_heatmap_data():
@@ -199,13 +205,6 @@ with tab2:
         return sample, state_table
 
     sample, state_table = load_heatmap_data()
-
-    st.warning(
-        "⚠️ **Data quality note:** State-level risk differences partially reflect "
-        "differences in *data provider reporting methodology*, not purely road danger. "
-        "See the Source-bias finding in the README before drawing strong conclusions "
-        "about any single state."
-    )
 
     map_col, rank_col = st.columns([2, 1])
 
@@ -249,6 +248,10 @@ with tab2:
 # ============================================================
 with tab3:
     st.header("Weather & Road Feature Influence on Severity")
+    st.caption(
+        "Clear, calm weather shows higher severity than fog, snow, or storms in this data "
+        "- drivers slow down for visibly bad conditions but not for ordinary clear weather."
+    )
 
     @st.cache_data
     def load_weather_road_data():
@@ -260,17 +263,10 @@ with tab3:
 
     weather_table, road_table = load_weather_road_data()
 
-    st.info(
-        "💡 **Counter-intuitive finding from EDA:** clear, calm weather shows *higher* "
-        "severity rates than fog, snow, or storms. The likely explanation — drivers slow "
-        "down when conditions visibly demand caution, but not in ordinary clear weather. "
-        "When crashes do happen in 'easy' conditions, they happen at higher speed."
-    )
-
     weather_col, road_col = st.columns(2)
 
     with weather_col:
-        st.subheader("🌦️ High-Severity Rate by Weather Condition")
+        st.subheader("High-Severity Rate by Weather Condition")
         st.caption("Min. 500 occurrences in sample")
         weather_sorted = weather_table.sort_values("High_Severity_Rate", ascending=True)
         fig_weather = px.bar(
@@ -283,8 +279,8 @@ with tab3:
         st.plotly_chart(fig_weather, use_container_width=True)
 
     with road_col:
-        st.subheader("🛣️ Severity: Feature Present vs Absent")
-        st.caption("Controlled features (signals, stops) reduce severity; uncontrolled junctions increase it")
+        st.subheader("Severity: Feature Present vs Absent")
+        st.caption("Signals/stops reduce severity; uncontrolled junctions increase it")
         road_melted = road_table.melt(
             id_vars="Feature", value_vars=["Severity_When_Present", "Severity_When_Absent"],
             var_name="Condition", value_name="High_Severity_Rate"
@@ -300,12 +296,9 @@ with tab3:
         )
         st.plotly_chart(fig_road, use_container_width=True)
 
-    st.divider()
-    st.markdown(
-        "**Reading this tab:** `Junction` is the one road feature where severity is *higher* "
-        "when present — likely because junctions include uncontrolled intersections and merge "
-        "points where vehicles cross paths at speed, unlike signal-/stop-controlled crossings "
-        "which force a slowdown."
+    st.caption(
+        "Junction is the one road feature where severity is higher when present, likely "
+        "uncontrolled intersections and merge points rather than signal- or stop-controlled ones."
     )
 
 # ============================================================
@@ -313,6 +306,10 @@ with tab3:
 # ============================================================
 with tab4:
     st.header("Global Feature Importance (SHAP)")
+    st.caption(
+        "Source_Encoded ranks highest - it reflects which provider reported the accident, "
+        "not a physical danger factor. See Methodology notes above."
+    )
 
     @st.cache_data
     def load_importance_data():
@@ -321,34 +318,16 @@ with tab4:
 
     importance_table = load_importance_data()
 
-    st.warning(
-        "⚠️ **`Source_Encoded` is the top feature** — this reflects which data provider "
-        "reported the accident, not a real-world danger factor. Our EDA found this source "
-        "has a 4x swing in reported severity rate by itself (8% vs ~33%), independent of "
-        "actual road conditions. See README for the full investigation."
-    )
-
     fig_importance = px.bar(
         importance_table.sort_values("Mean_Abs_SHAP", ascending=True),
         x="Mean_Abs_SHAP", y="Feature", orientation="h",
-        labels={"Mean_Abs_SHAP": "Mean |SHAP value| (avg. impact on prediction)", "Feature": ""},
+        labels={"Mean_Abs_SHAP": "Mean |SHAP value|", "Feature": ""},
         height=700, color="Mean_Abs_SHAP", color_continuous_scale="Purples"
     )
     fig_importance.update_layout(coloraxis_showscale=False)
     st.plotly_chart(fig_importance, use_container_width=True)
 
-    st.divider()
-    st.markdown(
-        """
-        **How to read this chart:** each bar shows how much, *on average*, that feature moved
-        the model's prediction up or down across 2,000 sample test accidents — regardless of
-        direction. A long bar means the feature matters a lot for *some* predictions; it doesn't
-        tell you whether it pushes risk up or down (use the Risk Calculator's per-prediction SHAP
-        panel for that, since the direction can depend on the specific scenario).
-
-        **Notable patterns confirmed here, matching our EDA:**
-        - `Traffic_Signal`, `Crossing`, `Stop` — controlled road features, consistently reduce severity
-        - `Junction` — the one road feature that *increases* severity (uncontrolled intersections/merges)
-        - `Start_Lat` / `Start_Lng` — strong signal, but a known overfitting risk (see README limitations)
-        """
+    st.caption(
+        "Bar length is average impact magnitude, not direction - it doesn't say whether a "
+        "feature pushes risk up or down. Use the Risk Calculator's per-prediction panel for that."
     )
