@@ -9,19 +9,19 @@ conditions. Built on the
 ## Screenshots
 
 **Risk Calculator** — scenario inputs
-![Risk Calculator Inputs](screenshots/risk_calculator_inputs.png)
+![Risk Calculator Inputs](Screenshots/risk_calculator_inputs.png)
 
 **Risk Calculator** — prediction result with per-prediction SHAP breakdown
-![Risk Calculator Result](screenshots/risk_calculator_result.png)
+![Risk Calculator Result](Screenshots/risk_calculator_result.png)
 
 **Accident Heatmap** — geographic distribution and state-by-state risk ranking
-![Accident Heatmap](screenshots/heatmap.png)
+![Accident Heatmap](Screenshots/heatmap.png)
 
 **Weather Influence** — interactive charts on weather and road-feature effects
-![Weather Influence](screenshots/weather_influence.png)
+![Weather Influence](Screenshots/weather_influence.png)
 
 **Feature Importance** — global SHAP ranking
-![Feature Importance](screenshots/feature_importance.png)
+![Feature Importance](Screenshots/feature_importance.png)
 
 ---
 
