@@ -5,7 +5,23 @@ End-to-end ML system predicting whether a US traffic accident is likely to be **
 conditions. Built on the
 [US-Accidents dataset](https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents) (7.7M+ records).
 
-**Live Demo:** *(add your Streamlit Cloud link here)*
+
+## Screenshots
+
+**Risk Calculator** — scenario inputs
+![Risk Calculator Inputs](screenshots/risk_calculator_inputs.png)
+
+**Risk Calculator** — prediction result with per-prediction SHAP breakdown
+![Risk Calculator Result](screenshots/risk_calculator_result.png)
+
+**Accident Heatmap** — geographic distribution and state-by-state risk ranking
+![Accident Heatmap](screenshots/heatmap.png)
+
+**Weather Influence** — interactive charts on weather and road-feature effects
+![Weather Influence](screenshots/weather_influence.png)
+
+**Feature Importance** — global SHAP ranking
+![Feature Importance](screenshots/feature_importance.png)
 
 ---
 
@@ -138,8 +154,15 @@ recalculated per click.
 Smart_Traffic/
 ├── app.py                            # Streamlit dashboard (4 tabs)
 ├── requirements.txt
+├── runtime.txt                        # pins Python 3.11 for Streamlit Cloud builds
 ├── README.md
 ├── .gitignore
+├── screenshots/                       # README screenshots
+│   ├── risk_calculator_inputs.png
+│   ├── risk_calculator_result.png
+│   ├── heatmap.png
+│   ├── weather_influence.png
+│   └── feature_importance.png
 ├── notebooks/
 │   └── eda_and_model_training.ipynb   # full EDA -> features -> training -> SHAP
 ├── models/
